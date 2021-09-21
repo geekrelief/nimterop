@@ -1,4 +1,4 @@
-import macros, strutils
+import macros, strutils, strformat
 
 import compiler/[ast, idents, lineinfos, msgs, options, parser, pathutils, renderer]
 
@@ -13,12 +13,18 @@ proc handleError*(conf: ConfigRef, info: TLineInfo, msg: TMsgKind, arg: string) 
 proc parseString*(gState: State, str: string): PNode =
   # Parse a string into Nim AST - use custom error handler that raises
   # an exception rather than exiting on failure
+  echo &"comphelp.nim parseString {str = }"
   try:
     result = parseString(
       str, gState.identCache, gState.config, errorHandler = handleError
     )
   except:
     decho getCurrentExceptionMsg()
+
+  if not result.isNil:
+    echo &"comphelp.nim parseString {result.kind = }"
+  else:
+    echo &"comphelp.nim parseString is nil"
 
 proc printTree*(gState: State, pnode: PNode, offset = ""): string =
   if not pnode.isNil and gState.debug and pnode.kind != nkNone:

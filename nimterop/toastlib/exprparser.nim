@@ -257,6 +257,25 @@ proc processStringLiteral(gState: State, node: TSNode): PNode =
 
 proc processTSNode(gState: State, node: TSNode, typeofNode: var PNode): PNode
 
+proc processCallExpression(gState: State, node: TSNode, typeofNode: var PNode): PNode = 
+  # Input => call(a, b)
+  echo "!!!!!! exprparser.nim processCallExpression val: ", node.val, " child count: ", node.len
+  let pnode = gState.parseString(node.val)
+  if pnode.isNil:
+    echo " cannot parse val! so we need to send a message to gecho"
+    gecho &""
+    result = newNode(nkNone)
+    return
+  for i in 0..<node.len:
+    echo "\t", i, " name:", node[i].getName(), " val: ", node[i].val
+  result = nkCall.newTree(gState.getIdent(node[0].val))
+
+  echo &"exprparser.nim argument_list count: {node[1].len}"
+  for i in 0..<node[1].len:
+    result.add gState.processTSNode(node[1][i], typeofNode)
+  
+  echo &"---!! exprparser.nim processCallExpression {result=}"
+
 proc processParenthesizedExpr(gState: State, node: TSNode, typeofNode: var PNode): PNode =
   # Input => (a + b)
   #
@@ -496,6 +515,7 @@ proc processTSNode(gState: State, node: TSNode, typeofNode: var PNode): PNode =
   let nodeName = node.getName()
 
   decho "NODE: ", nodeName, ", VAL: ", node.val
+  echo &"exprparser.nim processTSNode {nodeName=} {node.val=}"
 
   case nodeName
   of "number_literal":
@@ -510,6 +530,9 @@ proc processTSNode(gState: State, node: TSNode, typeofNode: var PNode): PNode =
     # Input -> 'F', '\060' // Octal, '\x5A' // Hex, '\r' // escape sequences
     # Output -> 'F', '0', 'Z', '\r'
     result = gState.processCharacterLiteral(node)
+  of "call_expression":
+    echo &"exprparser.nim processTSNode call_expression {node.val = }"
+    result = gState.processCallExpression(node, typeofNode)
   of "expression_statement", "ERROR", "translation_unit":
     # Note that we're parsing partial expressions, so the TSNode might contain
     # an ERROR node. If that's the case, they usually contain children with
@@ -518,6 +541,7 @@ proc processTSNode(gState: State, node: TSNode, typeofNode: var PNode): PNode =
     # Input (top level statement) -> ((1 + 3 - IDENT) - (int)400.0)
     # Output -> (1 + typeof(1)(3) - typeof(1)(IDENT) - typeof(1)(cast[int](400.0))) # Type casting in case some args differ
     if node.len == 1:
+      echo &"exprparser.nim processTSNode {node.len=}"
       result = gState.processTSNode(node[0], typeofNode)
     elif node.len > 1:
       var nodes: seq[PNode]
@@ -607,6 +631,7 @@ proc processTSNode(gState: State, node: TSNode, typeofNode: var PNode): PNode =
   of "comment":
     discard
   else:
+    echo &"??? exprparser.nim processTSNode Unsupported node type \"{nodeName}\" for node \"{node.val}\""
     raise newException(ExprParseError, &"Unsupported node type \"{nodeName}\" for node \"{node.val}\"")
 
   if result.kind != nkNone:
@@ -629,6 +654,7 @@ proc parseCExpression*(gState: State, codeRoot: TSNode): PNode =
     result = newNode(nkNone)
 
 proc parseCExpression*(gState: State, code: string, name = "", skipIdentValidation = false): PNode =
+  echo "exprparser.nim parseCExpression ", code, "\n"
   ## Convert the C string to a nim PNode tree
   gState.currentExpr = code
   gState.currentTyCastName = name

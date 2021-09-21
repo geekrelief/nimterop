@@ -24,6 +24,10 @@ proc getCompiler*(): string =
         "gcc"
       elif defined(clang):
         "clang"
+      elif defined(vcc):
+        "vcc"
+      elif defined(tcc):
+        "tcc"
       else:
         doAssert false, "Nimterop only supports gcc and clang at this time"
 

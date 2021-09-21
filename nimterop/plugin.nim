@@ -17,6 +17,8 @@ cOverrides = initTable[string, StringHash]()
 cOverrides["nskType"] = StringHash()
 cOverrides["nskConst"] = StringHash()
 cOverrides["nskProc"] = StringHash()
+cOverrides["nskTemplate"] = StringHash()
+cOverrides["nskMacro"] = StringHash()
 
 proc onSymbolOverrideFinal*(typ: string): StringHash {.exportc, dynlib.} =
   result = cOverrides[typ]

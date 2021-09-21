@@ -34,45 +34,55 @@ proc addOverrideFinal(gState: State, kind: NimSymKind) =
   # Add all unused cOverride symbols for `kind` to AST
   var
     syms = gState.getOverrideFinal(kind)
-    skind = getKeyword(kind) & "\n"
-  if kind == nskProc:
-    skind = ""
+    skind = case kind:
+      of nskProc, nskTemplate, nskMacro: ""
+      else: getKeyword(kind) & "\n"
 
-  if syms.nBl:
-    var
-      nsyms = gState.parseString(skind & syms)
-    if not nsyms.isNil:
-      let
-        list =
-          if kind == nskProc:
-            nsyms.sons
-          else:
-            nsyms[0].sons
-      case kind
-      of nskConst:
-        gState.constSection.sons.insert(list, 0)
-      of nskType:
-        gState.typeSection.sons.insert(list, 0)
-      of nskProc:
-        gState.procSection.sons.insert(list, 0)
-      else:
-        discard
+  if syms.len > 0:
+    for sym in syms:
+      var
+        nsyms = gState.parseString(skind & sym)
+      echo &"ast2.nim addOverrideFinal {nsyms.isNil=} {kind = } {skind = } {sym = }"
+      if not nsyms.isNil:
+        let
+          list =
+            case kind:
+            of nskProc, nskTemplate, nskMacro:
+              nsyms.sons
+            else:
+              nsyms[0].sons
+        case kind
+        of nskConst:
+          gState.constSection.sons.insert(list, 0)
+        of nskType:
+          gState.typeSection.sons.insert(list, 0)
+        of nskProc:
+          gState.procSection.sons.insert(list, 0)
+        of nskTemplate:
+          gState.templateSection.sons.insert(list, 0)
+        of nskMacro:
+          gState.macroSection.sons.insert(list, 0)
+        else:
+          discard
 
 proc addAllOverrideFinal(gState: State) =
+  echo "ast2.nim addAllOverrideFinal"
   # Add all unused cOverride symbols to AST
-  for kind in [nskConst, nskType, nskProc]:
+  for kind in [nskConst, nskType, nskProc, nskTemplate, nskMacro]:
     gState.addOverrideFinal(kind)
 
 proc newConstDef(gState: State, node: TSNode, fname = "", fval = ""): PNode =
   # Create an nkConstDef PNode
   #
   # If `fname` or `fval` are set, use them as name and val
+
   let
     origname =
       if fname.nBl:
         fname
       else:
         # node[0] = identifier = const name
+        echo &"****ast2.nim newConstDef {fname = } {node.getAtom() = }"
         gState.getNodeVal(node.getAtom())
 
     name = gState.getIdentifier(origname, nskConst)
@@ -85,7 +95,7 @@ proc newConstDef(gState: State, node: TSNode, fname = "", fval = ""): PNode =
         fval
       else:
         gState.getNodeVal(node[1])
-
+  
   var valident = newNode(nkNone)
 
   withCodeAst(val, gState.mode):
@@ -100,6 +110,11 @@ proc newConstDef(gState: State, node: TSNode, fname = "", fval = ""): PNode =
       maybeTyNode = root[0][0]
     elif root.len > 0:
       maybeTyNode = root[0]
+      echo "ast2.nim newConstDef withCodeAst", ts_node_string(root[0]), ",  ", val, ", ", gState.getNodeVal(root[0]), "\n"
+      if ts_node_child_count(root[0]) > 0:
+        echo root[0][0].getName()
+        for i in 0..ts_node_child_count(root[0][0]):
+          echo "\t", i, ": ", ts_node_child(root[0][0], i).getName()
 
     if not maybeTyNode.isNil:
       let name = maybeTyNode.getName()
@@ -109,13 +124,16 @@ proc newConstDef(gState: State, node: TSNode, fname = "", fval = ""): PNode =
       else:
         # Can't do gState.parseCExpression(root) here for some reason?
         # get a SEGFAULT if we use root
+        echo "ast2.nim newConstDef calling parseCExpression in exprparser.nim to get valident"
         valident = gState.parseCExpression(val)
+
+  echo &"ast2.nim newConstDef {origname=} {name=} {valident.kind=} {val=}"
 
   if name.Bl:
     # Name skipped or overridden since blank
     result = gState.getOverrideOrSkip(node, origname, nskConst)
   elif valident.kind != nkNone:
-    if gState.addNewIdentifer(name):
+    if gState.addNewIdentifier(name):
       # const X* = Y
       #
       # nkConstDef(
@@ -151,6 +169,11 @@ proc addConst(gState: State, node: TSNode) =
   #  (identifier)
   #  (preproc_arg)
   # )
+
+  var nname:TSNode = ts_node_child_by_field_name(node, cstring"name", "name".len)
+  var nvalue:TSNode = ts_node_child_by_field_name(node, cstring"value", "value".len)
+  echo &"----ast2.nim addConst {ts_node_string(node) =}"
+  echo &"ast2.nim addConst {nname.getName()=} =({gState.getNodeVal(nname) =}) {nvalue.getName()} =({gState.getNodeVal(nvalue) = })"
   decho("addConst()")
   gState.printDebug(node)
 
@@ -158,13 +181,45 @@ proc addConst(gState: State, node: TSNode) =
     node[1].getName() == "preproc_arg":
     let
       constDef = gState.newConstDef(node)
-
+    
     if not constDef.isNil:
       # nkConstSection.add
       gState.constSection.add constDef
       gState.constIdentifiers.incl constDef.getIdentName()
 
       gState.printDebug(constDef)
+
+proc addTemplate(gState: State, node: TSNode) =
+  # Macros that are function like need to be overriden
+  #
+  # #define X(A) Y = A
+  #
+  # (preproc_function_def
+  #  (identifier)
+  #  (preproc_params)
+  #  (preproc_arg)
+  # )
+  echo &"-=-=-= ast2.nim addTemplate {ts_node_string(node)=} "
+  decho("addTemplate()")
+  gState.printDebug(node)
+
+  var nname = node[0]
+  var nparameters = node[1]
+  var nvalue = node[2]
+  if nname.getName() == "identifier" and 
+    nparameters.getName() == "preproc_params" and 
+    nvalue.getName() == "preproc_arg":
+
+    let
+      origname = gState.getNodeVal(node.getAtom())
+      loc = gState.getLineCol(node)
+      info = (file: gState.sourceFile, line: loc.line, col: loc.col)
+      parameters = gState.getNodeVal(nparameters)
+      val = gState.getNodeVal(nvalue).strip()
+
+    if origname notIn gState.symOverride:
+      gecho &"# overridee @ {info}\n#\t define {origname}({parameters}) {val}"
+      gState.skippedSyms.incl origname
 
 proc addPragma(gState: State, node: TSNode, pragma: PNode, name: string, value: PNode = nil) =
   # Add pragma to an existing nkPragma tree
@@ -273,7 +328,7 @@ proc newXIdent(gState: State, node: TSNode, kind = nskType, fname = "", pragmas:
   if name.Bl:
     # Name skipped or overridden since blank
     result = gState.getOverrideOrSkip(node, origname, kind)
-  elif name notin gTypeMapValues and gState.addNewIdentifer(name):
+  elif name notin gTypeMapValues and gState.addNewIdentifier(name):
     # Add only if not an existing Nim type
 
     if kind == nskType:
@@ -802,6 +857,7 @@ proc addTypeObject(gState: State, node: TSNode, typeDef: PNode = nil, fname = ""
       if not fdlist.isNil and fdlist.len > 0:
         # Object with fields should be bycopy
         pragmas.add "bycopy"
+        pragmas.add "completeStruct"
       else:
         # Incomplete, might get forward declared
         pragmas.add "incompleteStruct"
@@ -962,7 +1018,7 @@ proc addTypeTyped(gState: State, node: TSNode, ftname = "", offset = 0) =
   for i in start+1+offset ..< node.len:
     # Add a type of a specific type
     let
-      # node[i] = identifer = name
+      # node[i] = identifier = name
       typeDef = gState.newXIdent(node[i], istype = true)
 
     if not typeDef.isNil:
@@ -1079,7 +1135,7 @@ proc addTypeArray(gState: State, node: TSNode) =
   # Could have multiple types, comma separated
   for i in start+1 ..< node.len:
     let
-      # node[i] = identifer = name
+      # node[i] = identifier = name
       typeDef = gState.newXIdent(node[i], istype = true)
 
     if not typeDef.isNil:
@@ -1231,6 +1287,9 @@ proc addType(gState: State, node: TSNode, union = false) =
   decho("addType()")
   gState.printDebug(node)
 
+  echo &"@@@ ast2.nim addType {node.getName()} {union = }\n{gState.getNodeVal(node)} "
+
+
   if node.getName() in ["struct_specifier", "union_specifier"]:
     # struct X;
     #
@@ -1330,7 +1389,7 @@ proc addType(gState: State, node: TSNode, union = false) =
             #   (function_declarator
             #    (parenthesized_declarator
             #     (pointer_declarator
-            #      (type_identifer)
+            #      (type_identifier)
             #     )
             #    )
             #    (parameter_list
@@ -1458,7 +1517,7 @@ proc addEnum(gState: State, node: TSNode) =
         eoverride = gState.getOverrideOrSkip(node, origname, nskType)
       if not eoverride.isNil:
         gState.typeSection.add eoverride
-    elif gState.addNewIdentifer(name):
+    elif gState.addNewIdentifier(name):
       # Add enum definition and helpers
       let defineNode = gState.parseString(&"defineEnum({name})")
       # nkStmtList(
@@ -1488,7 +1547,7 @@ proc addEnum(gState: State, node: TSNode) =
           forigname = gState.getNodeVal(atom)
           fname = gState.getIdentifier(forigname, nskEnumField)
 
-        if fname.nBl and gState.addNewIdentifer(fname):
+        if fname.nBl and gState.addNewIdentifier(fname):
           var
             fval = ""
           if prev.Bl:
@@ -1776,8 +1835,13 @@ proc addDef(gState: State, node: TSNode) =
 
 proc processNode(gState: State, node: TSNode): Status =
   const
-    known = ["preproc_def", "type_definition",
-      "struct_specifier", "union_specifier", "enum_specifier",
+    known = [
+      "preproc_def", 
+      "preproc_function_def",
+      "type_definition",
+      "struct_specifier", 
+      "union_specifier", 
+      "enum_specifier",
       "declaration"].toHashSet()
 
   result = success
@@ -1792,6 +1856,8 @@ proc processNode(gState: State, node: TSNode): Status =
       case name
       of "preproc_def":
         gState.addConst(node)
+      of "preproc_function_def":
+        gState.addTemplate(node)
       of "type_definition":
         if node.len > 0 and node[0].getName() == "enum_specifier":
           gState.addEnum(node)
@@ -1817,6 +1883,7 @@ proc processNode(gState: State, node: TSNode): Status =
     result = unknown
 
 proc searchTree(gState: State, root: TSNode) =
+  echo "ast2.nim searchTree"
   # Search AST generated by tree-sitter for recognized elements
   var
     node = root
@@ -1922,8 +1989,10 @@ proc initNim*(gState: State) =
   # Initialize all section PNodes
   gState.constSection = newNode(nkConstSection)
   gState.enumSection = newNode(nkStmtList)
+  gState.macroSection = newNode(nkStmtList)
   gState.pragmaSection = newNode(nkStmtList)
   gState.procSection = newNode(nkStmtList)
+  gState.templateSection = newNode(nkStmtList)
   gState.typeSection = newNode(nkTypeSection)
   gState.varSection = newNode(nkVarSection)
 
@@ -1936,6 +2005,8 @@ proc parseNim*(gState: State, fullpath: string, root: TSNode) =
   gState.currentHeader = getCurrentHeader(fullpath)
   gState.impShort = gState.currentHeader.replace("header", "imp")
   gState.sourceFile = fullpath
+
+  echo &"ast2.nim parseNim parsing header to generate nim {gState.sourceFile = }"
 
   # Setup pragmas
   gState.setupPragmas(root, fp)
@@ -1953,11 +2024,13 @@ proc printNim*(gState: State) =
   var
     tree = newNode(nkStmtList)
   tree.add gState.pragmaSection
+  tree.add gState.templateSection
+  tree.add gState.macroSection
   tree.add gState.enumSection
-  tree.add gState.constSection
   tree.add gState.typeSection
-  tree.add gState.varSection
   tree.add gState.procSection
+  tree.add gState.constSection
+  tree.add gState.varSection
 
   gecho gState.wrapperHeader
   gecho tree.renderTree()

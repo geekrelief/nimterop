@@ -236,7 +236,7 @@ proc getUniqueIdentifier*(gState: State, prefix = ""): string =
 
   return name & $count
 
-proc addNewIdentifer*(gState: State, name: string, override = false): bool =
+proc addNewIdentifier*(gState: State, name: string, override = false): bool =
   if override or name notin gState.symOverride:
     let
       nimName = name[0] & name[1 .. ^1].replace("_", "").toLowerAscii
@@ -263,20 +263,19 @@ proc getOverride*(gState: State, name: string, kind: NimSymKind): string =
     if nname.nBl:
       gState.onSymbolOverride(sym)
 
-      if sym.override.nBl and gState.addNewIdentifer(nname, override = true):
+      if sym.override.nBl and gState.addNewIdentifier(nname, override = true):
         result = sym.override
 
         if kind != nskProc:
           result = "  " & result.replace("\n", "\n ")
 
-proc getOverrideFinal*(gState: State, kind: NimSymKind): string =
+proc getOverrideFinal*(gState: State, kind: NimSymKind): seq[string] =
   # Get all unused cOverride symbols of `kind`
   let
     typ = $kind
-
   if gState.onSymbolOverrideFinal != nil:
     for i in gState.onSymbolOverrideFinal(typ):
-      result &= "\n" & gState.getOverride(i, kind)
+      result.add gState.getOverride(i, kind)
 
 proc getKeyword*(kind: NimSymKind): string =
   # Convert `kind` into a Nim keyword
@@ -395,6 +394,7 @@ proc loadPlugin*(gState: State, sourcePath: string) =
       cmd = &"{gState.nim} c --app:lib --gc:markAndSweep {flags} {outflags} {sourcePath.sanitizePath}"
 
       (output, ret) = execAction(cmd, die = false)
+
     doAssert ret == 0, output & "\nFailed to compile cPlugin()\n\ncmd: " & cmd
   doAssert fileExists(pdll), "No plugin binary generated for " & sourcePath
 

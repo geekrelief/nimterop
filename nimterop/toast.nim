@@ -22,12 +22,12 @@ proc process(gState: State, path: string) =
     gState.getPreprocessor(path)
   else:
     gState.code = readFile(path)
-
+  
   withCodeAst(gState.code, gState.mode):
     if gState.past:
       gecho gState.printLisp(root)
     elif gState.pnim:
-      parseNim(gState, path, root)
+      gstate.parseNim(path, root)
     elif gState.preprocess:
       gecho gState.code
 
@@ -118,7 +118,7 @@ proc main(
     outputFile = output
     check = check or stub
 
-  # Fix output file extention for Nim mode
+  # Fix output file extension for Nim mode
   if outputFile.len != 0 and pnim:
     if outputFile.splitFile().ext != ".nim":
       outputFile = outputFile & ".nim"
@@ -143,6 +143,7 @@ proc main(
     if gState.pnim:
       gecho preMainOut
       gState.initNim()
+
     for src in source:
       let
         src = src.expandSymlinkAbs()

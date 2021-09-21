@@ -1,4 +1,4 @@
-import hashes, macros, os, strformat, strutils
+import hashes, macros, os, strformat, strutils, parseutils
 
 import "."/[globals, paths]
 import "."/build/[ccompiler, misc, nimconf, shell]
@@ -41,7 +41,7 @@ proc getToast(fullpaths: seq[string], recurse: bool = false, dynlib: string = ""
     toastExe = toastExePath()
     # see https://github.com/nimterop/nimterop/issues/69
     cacheKey = getCacheValue(toastExe) & getCacheValue(fullpaths)
-
+  
   doAssert fileExists(toastExe), "toast not compiled: " & toastExe.sanitizePath &
     " make sure 'nimble build' or 'nimble install' built it"
 
@@ -129,6 +129,8 @@ proc getToast(fullpaths: seq[string], recurse: bool = false, dynlib: string = ""
 
     cmd.add &" -o {result.sanitizePath}"
 
+    echo "cimport.nim getToast cmd: \n\t", cmd
+  
     var
       (output, ret) = execAction(cmd, die = false)
     if ret != 0:
@@ -201,7 +203,7 @@ proc cAddStdDir*(mode = "c") {.compileTime.} =
     cAddSearchDir inc
 
 macro cDefine*(name: static[string], val: static[string] = ""): untyped =
-  ## `#define` an identifer that is forwarded to the C/C++ preprocessor if
+  ## `#define` an identifier that is forwarded to the C/C++ preprocessor if
   ## called within `cImport()` or `c2nImport()` as well as to the C/C++
   ## compiler during Nim compilation using `{.passC: "-DXXX".}`
   ##
@@ -214,7 +216,7 @@ macro cDefine*(name: static[string], val: static[string] = ""): untyped =
     gStateCT.defines.add(str)
 
 macro cDefine*(values: static seq[string]): untyped =
-  ## `#define` multiple identifers that are forwarded to the C/C++ preprocessor
+  ## `#define` multiple identifiers that are forwarded to the C/C++ preprocessor
   ## if called within `cImport()` or `c2nImport()` as well as to the C/C++
   ## compiler during Nim compilation using `{.passC: "-DXXX".}`
   ##
@@ -473,7 +475,7 @@ macro cOverride*(body): untyped =
               $inst[0]
 
           yield (name.strip(chars={'*'}), inst.repr, child.kind)
-      of nnkProcDef:
+      of nnkProcDef, nnkTemplateDef, nnkMacroDef:
         let
           name = $child[0]
 
@@ -501,6 +503,8 @@ proc onSymbolOverride*(sym: var Symbol) {.exportc, dynlib.} =
         of nnkTypeSection: "nskType"
         of nnkConstSection: "nskConst"
         of nnkProcDef: "nskProc"
+        of nnkTemplateDef: "nskTemplate"
+        of nnkMacroDef: "nskMacro"
         else: ""
 
     gStateCT.overrides &= &"""
@@ -566,6 +570,8 @@ macro cPlugin*(body): untyped =
   ## - `nskField` for struct field names
   ## - `nskEnumField` for enum (field) names, though they are in the global namespace as `nskConst`
   ## - `nskProc` - for proc names
+  ## - `nskTemplate` for template names
+  ## - `nskMacro` for macro names
   ##
   ## `macros` and `nimterop/plugins` are implicitly imported to provide access to standard
   ## plugin facilities.
@@ -625,11 +631,14 @@ macro cImport*(filenames: static seq[string], recurse: static bool = false, dynl
   # In case cOverride called after cPlugin
   if gStateCT.pluginSourcePath.Bl:
     cPluginHelper(gStateCT.pluginSource)
-
+  
   gecho "# Importing " & fullpaths.join(", ").sanitizePath
 
   let
     nimFile = getToast(fullpaths, recurse, dynlib, mode, flags, nimFile)
+  
+  let (dir, name, ext) = nimFile.splitFile()
+  doAssert name == parseIdent(name), &"\n\nOutput filename ='{name}' must map to a valid module / identifier name:\n\t'{nimFile}' !\n\n"
 
   # Reset plugin and overrides for next cImport
   if gStateCT.overrides.nBl:
