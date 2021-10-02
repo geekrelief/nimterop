@@ -1,6 +1,6 @@
 # Package
 
-version = "0.6.13"
+version = "0.7.0"
 author      = "genotrance"
 description = "C/C++ interop for Nim"
 license     = "MIT"
@@ -9,7 +9,7 @@ bin = @["nimterop/toast", "nimterop/loaf"]
 installDirs = @["nimterop"]
 
 # Dependencies
-requires "nim >= 0.20.2", "regex >= 0.15.0", "cligen >= 1.0.0"
+requires "nim >= 0.20.0", "regex >= 0.15.0", "cligen >= 1.5.0"
 
 import nimterop/docs
 import os
