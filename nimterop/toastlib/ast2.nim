@@ -189,8 +189,8 @@ proc addConst(gState: State, node: TSNode) =
 
       gState.printDebug(constDef)
 
-proc addTemplate(gState: State, node: TSNode) =
-  # Macros that are function like need to be overriden
+proc addMacro(gState: State, node: TSNode) =
+  # Macros that are function-like need to be overridden
   #
   # #define X(A) Y = A
   #
@@ -199,7 +199,7 @@ proc addTemplate(gState: State, node: TSNode) =
   #  (preproc_params)
   #  (preproc_arg)
   # )
-  echo &"-=-=-= ast2.nim addTemplate {ts_node_string(node)=} "
+  echo &"-=-=-= ast2.nim addMacro {ts_node_string(node)=} "
   decho("addTemplate()")
   gState.printDebug(node)
 
@@ -1857,7 +1857,7 @@ proc processNode(gState: State, node: TSNode): Status =
       of "preproc_def":
         gState.addConst(node)
       of "preproc_function_def":
-        gState.addTemplate(node)
+        gState.addMacro(node)
       of "type_definition":
         if node.len > 0 and node[0].getName() == "enum_specifier":
           gState.addEnum(node)
@@ -2024,10 +2024,10 @@ proc printNim*(gState: State) =
   var
     tree = newNode(nkStmtList)
   tree.add gState.pragmaSection
-  tree.add gState.templateSection
-  tree.add gState.macroSection
   tree.add gState.enumSection
   tree.add gState.typeSection
+  tree.add gState.templateSection
+  tree.add gState.macroSection
   tree.add gState.procSection
   tree.add gState.constSection
   tree.add gState.varSection

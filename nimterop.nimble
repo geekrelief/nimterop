@@ -9,7 +9,7 @@ bin = @["nimterop/toast", "nimterop/loaf"]
 installDirs = @["nimterop"]
 
 # Dependencies
-requires "nim >= 0.20.0", "regex >= 0.15.0", "cligen >= 1.5.0"
+requires "nim >= 0.20.0", "regex >= 0.15.0", "cligen >= 1.5.19"
 
 import nimterop/docs
 import os

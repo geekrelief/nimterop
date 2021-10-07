@@ -289,7 +289,7 @@ proc isIncluded(gState: State, file: string): bool {.inline.} =
   # Check if the specified file should be excluded from wrapped output
   if gState.exclude.nBl:
     for excl in gState.exclude:
-      if file.startsWith(excl):
+      if excl in file:
         return
   result = true
 
