@@ -62,7 +62,7 @@ type
       headersProcessed*: HashSet[string]     # Headers already processed directly or recursively
 
       # Nim compiler objects
-      constSection*, enumSection*, macroSection*, pragmaSection*, procSection*, templateSection*, typeSection*, varSection*: PNode
+      constSection*, enumSection*, enumEntrySection*, macroSection*, pragmaSection*, procSection*, templateSection*, typeSection*, varSection*: PNode
       identCache*: IdentCache
       config*: ConfigRef
       graph*: ModuleGraph

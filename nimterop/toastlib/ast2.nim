@@ -1572,7 +1572,7 @@ proc addEnum(gState: State, node: TSNode) =
           constNode = gState.parseString(&"const {fname}* = {fval}")[0][0]
 
         constNode.comment = gState.getCommentsStr(commentNodes)
-        gState.constSection.add constNode
+        gState.enumEntrySection.add constNode
         # In case symbol was skipped earlier
         gState.skippedSyms.excl forigname
 
@@ -1970,6 +1970,7 @@ proc initNim*(gState: State) =
   # Initialize all section PNodes
   gState.constSection = newNode(nkConstSection)
   gState.enumSection = newNode(nkStmtList)
+  gState.enumEntrySection = newNode(nkConstSection)
   gState.macroSection = newNode(nkStmtList)
   gState.pragmaSection = newNode(nkStmtList)
   gState.procSection = newNode(nkStmtList)
@@ -2004,6 +2005,7 @@ proc printNim*(gState: State) =
     tree = newNode(nkStmtList)
   tree.add gState.pragmaSection
   tree.add gState.enumSection
+  tree.add gState.enumEntrySection
   tree.add gState.typeSection
   tree.add gState.templateSection
   tree.add gState.macroSection
