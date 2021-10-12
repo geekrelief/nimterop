@@ -1909,25 +1909,6 @@ proc setupPragmas(gState: State, root: TSNode, fullpath: string) =
   var
     count = 0
 
-  if not gState.noHeader:
-    # {.pragma: impnameHdr, header: "xxx".}
-    let
-      hdrPragma = gState.newPragma(root, "pragma", gState.getIdent(gState.impShort & "Hdr"))
-    gState.addPragma(root, hdrPragma, "header", newStrNode(nkStrLit, fullpath))
-    gState.pragmaSection.add hdrPragma
-    count += 1
-
-  if gState.dynlib.nBl:
-    # {.pragma: impnameDyn, dynlib: libname.}
-    let
-      dynPragma = gState.newPragma(root, "pragma", gState.getIdent(gState.impShort & "Dyn"))
-    if '.' in gState.dynlib:
-      gState.addPragma(root, dynPragma, "dynlib", newStrNode(nkStrLit, gState.dynlib))
-    else:
-      gState.addPragma(root, dynPragma, "dynlib", gState.getIdent(gState.dynlib))
-    gState.pragmaSection.add dynPragma
-    count += 1
-
   # Only if not already done
   if gState.pragmaSection.len == count:
     # Add `{.experimental: "codeReordering".} for #206
@@ -1952,6 +1933,26 @@ proc setupPragmas(gState: State, root: TSNode, fullpath: string) =
     # Create `{.compile.}` for specified files
     for file in gState.compile:
       gState.pragmaSection.add gState.newPragma(root, "compile", newStrNode(nkStrLit, file))
+
+  if not gState.noHeader:
+    # {.pragma: impnameHdr, header: "xxx".}
+    let
+      hdrPragma = gState.newPragma(root, "pragma", gState.getIdent(gState.impShort & "Hdr"))
+    gState.addPragma(root, hdrPragma, "header", newStrNode(nkStrLit, fullpath))
+    gState.pragmaSection.add hdrPragma
+    count += 1
+
+  if gState.dynlib.nBl:
+    # {.pragma: impnameDyn, dynlib: libname.}
+    let
+      dynPragma = gState.newPragma(root, "pragma", gState.getIdent(gState.impShort & "Dyn"))
+    if '.' in gState.dynlib:
+      gState.addPragma(root, dynPragma, "dynlib", newStrNode(nkStrLit, gState.dynlib))
+    else:
+      gState.addPragma(root, dynPragma, "dynlib", gState.getIdent(gState.dynlib))
+    gState.pragmaSection.add dynPragma
+    count += 1
+
 
 proc initNim*(gState: State) =
   # Initialize for parseNim() one time
