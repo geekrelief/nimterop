@@ -830,7 +830,7 @@ proc newRecListTree(gState: State, name: string, node: TSNode): PNode =
           # Add nkIdentDefs for each field
           for field in gState.newIdentDefs(name, node[i], i, ftname = tname, exported = true):
             if not field.isNil:
-              #field.comment = gState.getCommentsStr(commentNodes)
+              field.comment = gState.getCommentsStr(commentNodes)
               result.add field
 
 proc addTypeObject(gState: State, node: TSNode, typeDef: PNode = nil, fname = "", istype = false, union = false) =
@@ -951,7 +951,7 @@ proc addTypeObject(gState: State, node: TSNode, typeDef: PNode = nil, fname = ""
         gState.addPragma(node, typeDef[0][1], pragmas)
 
     # nkTypeSection.add
-    #typeDef.comment = gState.getCommentsStr(commentNodes)
+    typeDef.comment = gState.getCommentsStr(commentNodes)
     gState.typeSection.add typeDef
 
     gState.printDebug(typeDef)
@@ -975,7 +975,7 @@ proc addTypeObject(gState: State, node: TSNode, typeDef: PNode = nil, fname = ""
       if name.nBl and gState.identifierNodes.hasKey(name):
         let
           def = gState.identifierNodes[name]
-        #def.comment = gState.getCommentsStr(commentNodes)
+        def.comment = gState.getCommentsStr(commentNodes)
 
         # Duplicate nkTypeDef for `name` with empty fields
         if def.kind == nkTypeDef and def.len == 3 and
@@ -1016,7 +1016,7 @@ proc addTypeTyped(gState: State, node: TSNode, ftname = "", offset = 0) =
       typeDef = gState.newXIdent(node[i], istype = true)
 
     if not typeDef.isNil:
-      #typeDef.comment = gState.getCommentsStr(commentNodes)
+      typeDef.comment = gState.getCommentsStr(commentNodes)
       let
         name = typeDef.getIdentName()
 
@@ -1158,7 +1158,7 @@ proc addTypeArray(gState: State, node: TSNode) =
       #  )
       # )
 
-      #typeDef.comment = gState.getCommentsStr(commentNodes)
+      typeDef.comment = gState.getCommentsStr(commentNodes)
       # nkTypeSection.add
       gState.typeSection.add typeDef
 
@@ -1517,7 +1517,7 @@ proc addEnum(gState: State, node: TSNode) =
       #   nkIdent(name) <- set the comment here
       #  )
       # )
-      #defineNode[0][1].comment = gState.getCommentsStr(gState.getCommentNodes(node))
+      defineNode[0][1].comment = gState.getCommentsStr(gState.getCommentNodes(node))
       gState.enumSection.add defineNode
 
       # Create const for fields
@@ -1581,7 +1581,7 @@ proc addEnum(gState: State, node: TSNode) =
           # Cannot use newConstDef() since parseString(fval) adds backticks to and/or
           constNode = gState.parseString(&"const {fname}* = {fval}")[0][0]
 
-        #constNode.comment = gState.getCommentsStr(commentNodes)
+        constNode.comment = gState.getCommentsStr(commentNodes)
         gState.enumEntrySection.add constNode
         # In case symbol was skipped earlier
         gState.skippedSyms.excl forigname
@@ -1698,7 +1698,7 @@ proc addProc(gState: State, node, rnode: TSNode, commentNodes: seq[TSNode]) =
     procDef.add newNode(nkEmpty)
     procDef.add newNode(nkEmpty)
 
-    #procDef.comment = gState.getCommentsStr(commentNodes)
+    procDef.comment = gState.getCommentsStr(commentNodes)
 
     # nkProcSection.add
     gState.procSection.add procDef
@@ -1757,7 +1757,7 @@ proc addVar(gState: State, node: TSNode, offset: SomeInteger, commentNodes: seq[
     #  nkEmpty()
     # )
 
-    #identDefs.comment = gState.getCommentsStr(commentNodes)
+    identDefs.comment = gState.getCommentsStr(commentNodes)
 
     # nkVarSection.add
     gState.varSection.add identDefs
