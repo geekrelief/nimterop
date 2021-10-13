@@ -259,15 +259,22 @@ proc processTSNode(gState: State, node: TSNode, typeofNode: var PNode): PNode
 
 proc processCallExpression(gState: State, node: TSNode, typeofNode: var PNode): PNode = 
   # Input => call(a, b)
-  let pnode = gState.parseString(node.val)
-  if pnode.isNil:
-    gecho &""
-    result = newNode(nkNone)
-    return
+  var child_count = ts_node_named_child_count(node)
+  #echo &"---exprparser.nim processCallExpression\n\t{ts_node_string(node)=}\n\t{child_count=}\n\t{node.val=}"
+
   result = nkCall.newTree(gState.getIdent(node[0].val))
 
+  var parsed = true
   for i in 0..<node[1].len:
-    result.add gState.processTSNode(node[1][i], typeofNode)
+    var argNode = gState.processTSNode(node[1][i], typeofNode)
+    if argNode.isNil:
+      parsed = false
+    else:
+      result.add argNode
+  
+  if not parsed:
+    gecho &""
+    result = newNode(nkNone)
 
 proc processParenthesizedExpr(gState: State, node: TSNode, typeofNode: var PNode): PNode =
   # Input => (a + b)

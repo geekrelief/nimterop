@@ -129,6 +129,8 @@ proc getToast(fullpaths: seq[string], recurse: bool = false, dynlib: string = ""
 
     cmd.add &" -o {result.sanitizePath}"
 
+    gecho &"---cimport.nim toast cmd:\n\n{cmd}\n\n"
+
     var
       (output, ret) = execAction(cmd, die = false)
     if ret != 0:
