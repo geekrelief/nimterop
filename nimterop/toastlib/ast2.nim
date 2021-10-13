@@ -855,10 +855,6 @@ proc addTypeObject(gState: State, node: TSNode, typeDef: PNode = nil, fname = ""
       if not fdlist.isNil and fdlist.len > 0:
         # Object with fields should be bycopy
         pragmas.add "bycopy"
-        pragmas.add "completeStruct"
-      else:
-        # Incomplete, might get forward declared
-        pragmas.add "incompleteStruct"
 
       pragmas
 
