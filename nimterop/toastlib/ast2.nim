@@ -1567,15 +1567,26 @@ proc addEnum(gState: State, node: TSNode) =
         let
           fval = block:
             var fval = fval
+            var pnode:PNode
             if fval.Bl:
               # Evaluate enum value from expression
-              fval = &"({$gState.parseCExpression(cexpr, name)})"
+              pnode = gState.parseCExpression(cexpr, name)
+              fval = &"({$pnode})"
             if origname.nBl:
               # Named enum so cast to type - #236
               fval &= &".{name}"
             else:
               # Cast to cint to match underlying type
-              fval &= ".cint"
+              if not pnode.isnil:
+                case pnode.kind:
+                  of nkInt64Lit:
+                    fval &= ".clonglong"
+                  of nkUInt64Lit:
+                    fval &= ".culonglong"
+                  else:
+                    fval &= ".cint"
+              else:
+                fval &= ".cint"
             fval
 
           # Cannot use newConstDef() since parseString(fval) adds backticks to and/or
