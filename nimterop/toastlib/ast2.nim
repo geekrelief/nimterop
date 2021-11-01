@@ -452,11 +452,12 @@ proc newArrayTree(gState: State, node: TSNode, typ, size: PNode = nil): PNode =
   # If `size` is nil, create UncheckedArray[typ]
   let
     info = gState.getLineInfo(node.getAtom())
+    hasSize = not (size.isNil or (size.kind in nkIntLit..nkUInt64Lit and size.intVal == 0))
     tname =
-      if size.isNil:
-        "UncheckedArray"
-      else:
+      if hasSize:
         "array"
+      else:
+        "UncheckedArray"
     ident = gState.getIdent(tname, info, exported = false)
 
   # array[size, typ]
@@ -468,7 +469,7 @@ proc newArrayTree(gState: State, node: TSNode, typ, size: PNode = nil): PNode =
   # )
   result = newNode(nkBracketExpr)
   result.add ident
-  if not size.isNil:
+  if hasSize:
     result.add size
   result.add typ
 
