@@ -60,6 +60,7 @@ proc main(
     suffix: seq[string] = @[],
     symOverride: seq[string] = @[],
     typeMap: seq[string] = @[],
+    unsignedEnum = false,
     source: seq[string]
   ) =
 
@@ -87,7 +88,8 @@ proc main(
     recurse: recurse,
     replace: newOrderedTable[string, string](),
     suffix: suffix,
-    symOverride: symOverride
+    symOverride: symOverride,
+    unsignedEnum: unsignedEnum
   )
 
   # Split some arguments with ,
@@ -253,7 +255,8 @@ when isMainModule:
     "stub": "stub out undefined type references as objects",
     "suffix": "strip suffix from identifiers",
     "symOverride": "skip generating specified symbols",
-    "typeMap": "map instances of type X to Y - e.g. ABC=cint"
+    "typeMap": "map instances of type X to Y - e.g. ABC=cint",
+    "unsignedEnum": "default enum values as unsigned"
   }, short = {
     "check": 'k',
     "convention": 'C',
@@ -275,5 +278,6 @@ when isMainModule:
     "stub": 's',
     "suffix": 'F',
     "symOverride": 'O',
-    "typeMap": 'T'
+    "typeMap": 'T',
+    "unsignedEnum": 'u'
   })

@@ -41,6 +41,7 @@ type
     symOverride*: seq[string]  # `cSkipSymbol()`, `cOverride()` and `--symOverride | -O` symbols to skip during wrapping
     typeMap*: TableRef[string, string]
                                # `--typeMap | -T` to map instances of type X to Y - e.g. ABC=cint
+    unsignedEnum*: bool
 
     when defined(TOAST):
       # Data fields

@@ -1577,7 +1577,8 @@ proc addEnum(gState: State, node: TSNode) =
               # Named enum so cast to type - #236
               fval &= &".{name}"
             else:
-              # Cast to cint to match underlying type
+              # Cast to match underlying type
+              let defaultEnumType = if gState.unsignedEnum: ".cuint" else: ".cint"
               if not pnode.isnil:
                 case pnode.kind:
                   of nkInt64Lit:
@@ -1585,9 +1586,9 @@ proc addEnum(gState: State, node: TSNode) =
                   of nkUInt64Lit:
                     fval &= ".culonglong"
                   else:
-                    fval &= ".cint"
+                    fval &= defaultEnumType
               else:
-                fval &= ".cint"
+                fval &= defaultEnumType
             fval
 
           # Cannot use newConstDef() since parseString(fval) adds backticks to and/or
