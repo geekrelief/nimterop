@@ -1511,7 +1511,7 @@ proc addEnum(gState: State, node: TSNode) =
         gState.typeSection.add eoverride
     elif gState.addNewIdentifier(name):
       # Add enum definition and helpers
-      let defineNode = gState.parseString(&"defineEnum({name})")
+      let defineNode = gState.parseString(&"defineEnum({name}, {gState.enumNotDistinct}, {gState.enumUnsigned})")
       # nkStmtList(
       #  nkCall(
       #   nkIdent("defineEnum"),
@@ -1578,7 +1578,7 @@ proc addEnum(gState: State, node: TSNode) =
               fval &= &".{name}"
             else:
               # Cast to match underlying type
-              let defaultEnumType = if gState.unsignedEnum: ".cuint" else: ".cint"
+              let defaultEnumType = if gState.enumUnsigned: ".cuint" else: ".cint"
               if not pnode.isnil:
                 case pnode.kind:
                   of nkInt64Lit:

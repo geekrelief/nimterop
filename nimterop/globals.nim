@@ -20,6 +20,8 @@ type
     debug*: bool               # `cDebug()` or `--debug | -d` to enable debug mode
     defines*: seq[string]      # Symbols added by `cDefine()` and `--define | -D` for C/C++ preprocessor/compiler
     dynlib*: string            # `cImport(dynlib)` or `--dynlib | -l` to specify variable containing library name
+    enumNotDistinct*: bool     # `--enumNotDistinct` to specify enums should not be distinct
+    enumUnsigned*: bool        # `--enumUnsigned` to specify enum type should be cuint
     exclude*: seq[string]      # files or directories to exclude from the wrapped output
     feature*: seq[Feature]     # `--feature | -f` feature flags enabled
     includeDirs*: seq[string]  # Paths added by `cIncludeDir()` and `--includeDirs | -I` for C/C++ preprocessor/compiler
@@ -41,7 +43,6 @@ type
     symOverride*: seq[string]  # `cSkipSymbol()`, `cOverride()` and `--symOverride | -O` symbols to skip during wrapping
     typeMap*: TableRef[string, string]
                                # `--typeMap | -T` to map instances of type X to Y - e.g. ABC=cint
-    unsignedEnum*: bool
 
     when defined(TOAST):
       # Data fields

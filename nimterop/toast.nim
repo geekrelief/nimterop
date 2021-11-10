@@ -39,6 +39,8 @@ proc main(
     debug = false,
     defines: seq[string] = @[],
     dynlib: string = "",
+    enumNotDistinct = false,
+    enumUnsigned = false,
     exclude: seq[string] = @[],
     feature: seq[Feature] = @[],
     includeDirs: seq[string] = @[],
@@ -60,7 +62,6 @@ proc main(
     suffix: seq[string] = @[],
     symOverride: seq[string] = @[],
     typeMap: seq[string] = @[],
-    unsignedEnum = false,
     source: seq[string]
   ) =
 
@@ -71,6 +72,8 @@ proc main(
     debug: debug,
     defines: defines,
     dynlib: dynlib,
+    enumNotDistinct: enumNotDistinct,
+    enumUnsigned: enumUnsigned,
     exclude: exclude,
     feature: feature,
     includeDirs: includeDirs,
@@ -88,8 +91,7 @@ proc main(
     recurse: recurse,
     replace: newOrderedTable[string, string](),
     suffix: suffix,
-    symOverride: symOverride,
-    unsignedEnum: unsignedEnum
+    symOverride: symOverride
   )
 
   # Split some arguments with ,
@@ -234,6 +236,8 @@ when isMainModule:
     "debug": "enable debug output",
     "defines": "definitions to pass to preprocessor",
     "dynlib": "{.dynlib.} pragma to import symbols - Nim const string or file path",
+    "enumNotDistinct": "enum type is not distinct",
+    "enumUnsigned": "default enum values as cuint",
     "exclude": "files or directories to exclude from the wrapped output",
     "feature": "flags to enable experimental features",
     "includeDirs": "include directory to pass to preprocessor",
@@ -255,8 +259,7 @@ when isMainModule:
     "stub": "stub out undefined type references as objects",
     "suffix": "strip suffix from identifiers",
     "symOverride": "skip generating specified symbols",
-    "typeMap": "map instances of type X to Y - e.g. ABC=cint",
-    "unsignedEnum": "default enum values as unsigned"
+    "typeMap": "map instances of type X to Y - e.g. ABC=cint"
   }, short = {
     "check": 'k',
     "convention": 'C',
@@ -279,5 +282,4 @@ when isMainModule:
     "suffix": 'F',
     "symOverride": 'O',
     "typeMap": 'T',
-    "unsignedEnum": 'u'
   })
