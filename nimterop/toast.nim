@@ -23,6 +23,10 @@ proc process(gState: State, path: string) =
   else:
     gState.code = readFile(path)
   
+  if gState.code.strip().len == 0:
+    gecho &"# process -- {path}: Is empty, skipping."
+    return
+
   withCodeAst(gState.code, gState.mode):
     if gState.past:
       gecho gState.printLisp(root)
