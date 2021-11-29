@@ -31,7 +31,7 @@ proc getNimCheckError(nimFile: string) =
   doAssert false, &"\n\n{check}\n\n" &
     "Codegen limitation or error - review 'nim check' output above generated for " & nimFile
 
-proc getToast(fullpaths: seq[string], recurse: bool = false, dynlib: string = "",
+proc getToast(fullpaths: seq[string], verbose = false, recurse = false, dynlib = "",
   mode = "c", flags = "", outFile = "", noNimout = false): string =
   var
     cmd = when defined(Windows): "cmd /c " else: ""
@@ -129,7 +129,8 @@ proc getToast(fullpaths: seq[string], recurse: bool = false, dynlib: string = ""
 
     cmd.add &" -o {result.sanitizePath}"
 
-    gecho &"---cimport.nim toast cmd:\n\n{cmd}\n\n"
+    if verbose:
+      gecho &"---cimport.nim toast cmd:\n\n{cmd}\n\n"
 
     var
       (output, ret) = execAction(cmd, die = false)
@@ -614,7 +615,7 @@ macro cPluginPath*(path: static[string]): untyped =
   doAssert fileExists(path), "Plugin file not found: " & path
   cPluginHelper(readFile(path), imports = "")
 
-macro cImport*(filenames: static seq[string], recurse: static bool = false, dynlib: static string = "",
+macro cImport*(filenames: static seq[string], verbose: static bool = false, recurse: static bool = false, dynlib: static string = "",
   mode: static string = "c", flags: static string = "", nimFile: static string = ""): untyped =
   ## Import multiple headers in one shot
   ##
@@ -632,10 +633,10 @@ macro cImport*(filenames: static seq[string], recurse: static bool = false, dynl
   if gStateCT.pluginSourcePath.Bl:
     cPluginHelper(gStateCT.pluginSource)
   
-  gecho "# Importing " & fullpaths.join(", ").sanitizePath
+  #gecho "# Importing " & fullpaths.join(", ").sanitizePath
 
   let
-    nimFile = getToast(fullpaths, recurse, dynlib, mode, flags, nimFile)
+    nimFile = getToast(fullpaths, verbose, recurse, dynlib, mode, flags, nimFile)
   
   let (dir, name, ext) = nimFile.splitFile()
   doAssert name == parseIdent(name), &"\n\nOutput filename ='{name}' must map to a valid module / identifier name:\n\t'{nimFile}' !\n\n"
@@ -713,7 +714,7 @@ macro cImport*(filename: static string, recurse: static bool = false, dynlib: st
   return quote do:
     cImport(@[`filename`], bool(`recurse`), `dynlib`, `mode`, `flags`, `nimFile`)
 
-macro c2nImport*(filename: static string, recurse: static bool = false, dynlib: static string = "",
+macro c2nImport*(filename: static string, verbose: static bool = false, recurse: static bool = false, dynlib: static string = "",
   mode: static string = "c", flags: static string = "", nimFile: static string = ""): untyped =
   ## Import all supported definitions from specified header file using `c2nim`
   ##
@@ -739,10 +740,10 @@ macro c2nImport*(filename: static string, recurse: static bool = false, dynlib: 
   let
     fullpath = findPath(filename)
 
-  gecho "# Importing " & fullpath & " with c2nim"
+  #gecho "# Importing " & fullpath & " with c2nim"
 
   let
-    hFile = getToast(@[fullpath], recurse, dynlib, mode, noNimout = true)
+    hFile = getToast(@[fullpath], verbose, recurse, dynlib, mode, noNimout = true)
     nimFile = if nimFile.nBl: fixRelPath(nimFile) else: hFile.changeFileExt("nim")
     header = "header" & fullpath.splitFile().name.split(seps = {'-', '.'}).join()
 

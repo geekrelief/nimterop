@@ -14,6 +14,7 @@ var
 
 proc process(gState: State, path: string) =
   doAssert fileExists(path), &"Invalid path {path}"
+  #echo "toast.nim process: ", path
 
   if gState.mode.Bl:
     gState.mode = getCompilerMode(path)
@@ -263,7 +264,7 @@ when isMainModule:
     "stub": "stub out undefined type references as objects",
     "suffix": "strip suffix from identifiers",
     "symOverride": "skip generating specified symbols",
-    "typeMap": "map instances of type X to Y - e.g. ABC=cint"
+    "typeMap": "map instances of type X to Y - e.g. ABC=cint",
   }, short = {
     "check": 'k',
     "convention": 'C',

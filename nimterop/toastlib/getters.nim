@@ -333,6 +333,8 @@ proc getPreprocessor*(gState: State, fullpath: string) =
     if outp.readLine(line):
       # We want to keep blank lines here for comment processing
       if line.len > 10 and line[0] == '#' and line[1] == ' ' and line.contains('"'):
+        # https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
+        # # linenum filename flags
         # # 1 "path/to/file.h" 1
         start = false
         line = line.split('"')[1].sanitizePath(noQuote = true)
@@ -364,6 +366,7 @@ proc getPreprocessor*(gState: State, fullpath: string) =
   assert p.peekExitCode() == 0,
     gState.code & "\n\nFailed in preprocessing:\n  " &
     getCompiler() & " " & args.join(" ")
+  #echo gState.code # preprocessor output
   gState.headersProcessed.incl newHeaders
 
 # Plugin related
