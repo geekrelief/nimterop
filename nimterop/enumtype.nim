@@ -1,10 +1,9 @@
 import macros
 
-macro defineEnum(typ: untyped, enumNotDistinct: bool = false, enumUnsigned: bool = false): untyped =
+macro defineEnum(typ: untyped, enumNotDistinct: bool = false, enumBaseTypeStr: string = "cint"): untyped =
   result = newNimNode(nnkStmtList)
-
-  let enumType = if enumUnsigned.boolVal: ident("cuint") else: ident("cint")
-
+  
+  let enumType = newIdentNode(enumBaseTypeStr.strVal)
   if enumNotDistinct.boolVal:
     result.add quote do:
       type `typ`* = `enumType`

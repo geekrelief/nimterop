@@ -21,7 +21,7 @@ type
     defines*: seq[string]      # Symbols added by `cDefine()` and `--define | -D` for C/C++ preprocessor/compiler
     dynlib*: string            # `cImport(dynlib)` or `--dynlib | -l` to specify variable containing library name
     enumNotDistinct*: bool     # `--enumNotDistinct` to specify enums should not be distinct
-    enumUnsigned*: bool        # `--enumUnsigned` to specify enum type should be cuint
+    enumBaseTypeStr*: string   # `--enumBaseTypeStr` default is "cint"
     exclude*: seq[string]      # files or directories to exclude from the wrapped output
     feature*: seq[Feature]     # `--feature | -f` feature flags enabled
     includeDirs*: seq[string]  # Paths added by `cIncludeDir()` and `--includeDirs | -I` for C/C++ preprocessor/compiler
