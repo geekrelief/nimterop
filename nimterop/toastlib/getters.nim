@@ -56,12 +56,12 @@ var
     "int": "cint",
     "signed": "cint",
     "signed int": "cint",
-    "ssize_t": "int",
+    "ssize_t": "int", # cssize_t is not defined in nim as of 1.7
     "unsigned": "cuint",
     "unsigned int": "cuint",
     "uInt": "cuint",
     "u_int": "cuint",
-    "size_t": "uint",
+    "size_t": "csize_t",
 
     "int8_t": "int8",
     "int16_t": "int16",

@@ -28,7 +28,6 @@ else:
 const
   pHeaderImpBy = @["bycopy"] & pHeaderImp
   pHeaderBy = @["bycopy"] & pHeader
-  pHeaderInc = @["incompleteStruct"] & pHeader
 
 cOverride:
   const
@@ -40,7 +39,7 @@ cOverride:
 cDefine("SOME_CONST=100")
 
 when not defined(WRAPPED):
-  cImport(path, flags="-f:ast2 -ENK_,SDL_ -GVICE=SLICE -TMyInt=cint" & flags, nimFile = "tast2wrapped.nim")
+  cImport(path, verbose = false, recurse = false, flags="-f:ast2 -ENK_,SDL_ -GVICE=SLICE -TMyInt=cint" & flags, nimFile = "tast2wrapped.nim")
 else:
   import tast2wrapped
 
@@ -170,7 +169,7 @@ assert typeof(SOME_ARRAY) is array[100, some_struct_s]
 
 assert A0 is object
 testFields(A0, "f1!cint")
-checkPragmas(A0, pHeaderBy, istype = false)
+checkPragmas(A0, pHeader, istype = false)
 var a0: A0
 a0.f1 = 1
 
@@ -181,19 +180,19 @@ a1.f1 = 2
 
 assert A2 is object
 testFields(A2)
-checkPragmas(A2, pHeaderInc, istype = false)
+checkPragmas(A2, pHeader, istype = false)
 when defined(NOHEADER):
   # typedef struct X; is invalid
   var a2: A2
 
 assert A3 is object
 testFields(A3)
-checkPragmas(A3, pHeaderInc, istype = false)
+checkPragmas(A3, pHeader, istype = false)
 var a3: A3
 
 assert A4 is object
 testFields(A4, "f1!cfloat")
-checkPragmas(A4, pHeaderImpBy)
+checkPragmas(A4, pHeaderImp)
 var a4: A4
 a4.f1 = 4.1
 
@@ -373,30 +372,30 @@ assert pfYUV422P8 == pfYUV420P8 + 1
 assert pfRGB27 == cmRGB.VSPresetFormat + 11
 assert pfCompatYUY2 == pfCompatBGR32 + 1
 
-assert pcre_malloc is proc(a1: uint): pointer {.cdecl, varargs.}
+assert pcre_malloc is proc(a1: csize_t): pointer {.cdecl, varargs.}
 checkPragmas(pcre_malloc, @["importc", "cdecl", "varargs"] & pHeader)
 
 assert pcre_free is proc(a1: pointer) {.cdecl.}
 checkPragmas(pcre_free, @["importc", "cdecl"] & pHeader)
 
-assert pcre_stack_malloc is proc(a1: uint): pointer {.cdecl.}
+assert pcre_stack_malloc is proc(a1: csize_t): pointer {.cdecl.}
 checkPragmas(pcre_stack_malloc, @["importc", "cdecl"] & pHeader)
 
 assert DuplexTransferImageViewMethod is
-  proc (a1: ptr ImageView; a2: ptr ImageView; a3: ptr ImageView; a4: uint;
+  proc (a1: ptr ImageView; a2: ptr ImageView; a3: ptr ImageView; a4: csize_t;
         a5: cint; a6: pointer): MagickBooleanType {.cdecl.}
 
 assert GetImageViewMethod is
-  proc (a1: ptr ImageView; a2: uint; a3: cint; a4: pointer): MagickBooleanType {.cdecl.}
+  proc (a1: ptr ImageView; a2: csize_t; a3: cint; a4: pointer): MagickBooleanType {.cdecl.}
 
 assert SetImageViewMethod is
-  proc (a1: ptr ImageView; a2: uint; a3: cint; a4: pointer): MagickBooleanType {.cdecl.}
+  proc (a1: ptr ImageView; a2: csize_t; a3: cint; a4: pointer): MagickBooleanType {.cdecl.}
 
 assert TransferImageViewMethod is
-  proc (a1: ptr ImageView; a2: ptr ImageView; a3: uint; a4: cint; a5: pointer): MagickBooleanType {.cdecl.}
+  proc (a1: ptr ImageView; a2: ptr ImageView; a3: csize_t; a4: cint; a5: pointer): MagickBooleanType {.cdecl.}
 
 assert UpdateImageViewMethod is
-  proc (a1: ptr ImageView; a2: uint; a3: cint; a4: pointer): MagickBooleanType {.cdecl.}
+  proc (a1: ptr ImageView; a2: csize_t; a3: cint; a4: pointer): MagickBooleanType {.cdecl.}
 
 # Issue #156, math.h
 assert absfunptr1 is proc(a1: proc(a1: ptr A0): cint {.cdecl.}): pointer {.cdecl.}
@@ -439,7 +438,7 @@ checkPragmas(GPU_Target, pHeaderBy, istype = false)
 # Issue #185
 assert AudioCVT is object
 testFields(AudioCVT, "needed!cint")
-checkPragmas(AudioCVT, pHeaderBy, origname = "struct SDL_AudioCVT")
+checkPragmas(AudioCVT, pHeader, origname = "struct SDL_AudioCVT")
 
 # Issue #172
 assert SomeType is object

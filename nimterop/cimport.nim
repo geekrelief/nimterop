@@ -659,7 +659,7 @@ macro cImport*(filenames: static seq[string], verbose: static bool = false, recu
   except:
     getNimCheckError(nimFile)
 
-macro cImport*(filename: static string, recurse: static bool = false, dynlib: static string = "",
+macro cImport*(filename: static string, verbose: static bool = false, recurse: static bool = false, dynlib: static string = "",
   mode: static string = "c", flags: static string = "", nimFile: static string = ""): untyped =
   ## Import all supported definitions from specified header file. Generated
   ## content is cached in `nimcache` until `filename` changes unless
@@ -712,7 +712,7 @@ macro cImport*(filename: static string, recurse: static bool = false, dynlib: st
   ## is retained for the next `cImport()` call unless a new `cPlugin()` call is
   ## defined.
   return quote do:
-    cImport(@[`filename`], bool(`recurse`), `dynlib`, `mode`, `flags`, `nimFile`)
+    cImport(@[`filename`], bool(`verbose`), bool(`recurse`), `dynlib`, `mode`, `flags`, `nimFile`)
 
 macro c2nImport*(filename: static string, verbose: static bool = false, recurse: static bool = false, dynlib: static string = "",
   mode: static string = "c", flags: static string = "", nimFile: static string = ""): untyped =
