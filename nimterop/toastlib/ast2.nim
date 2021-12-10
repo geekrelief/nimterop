@@ -875,6 +875,7 @@ proc addTypeObject(gState: State, node: TSNode, typeDef: PNode = nil, fname = ""
 
     typeDefExisting = not typeDef.isNil
 
+  var
     typeDef =
       if typeDef.isNil:
         gState.newXIdent(node, fname = fname, pragmas = pragmas, istype = istype)
@@ -927,10 +928,16 @@ proc addTypeObject(gState: State, node: TSNode, typeDef: PNode = nil, fname = ""
     #   )
     #  )
     # )
+
     typeDef.prefixIdentName(gState.typeScope.join("_"))
     let
       name = typeDef.getIdentName()
       obj = newNode(nkObjectTy)
+
+    var tdef = gState.getOverrideOrSkip(node, name, nskType)
+    if tdef != nil:
+      typeDef = tdef
+
     obj.add newNode(nkEmpty)
     obj.add newNode(nkEmpty)
 
