@@ -773,24 +773,28 @@ proc newRecListTree(gState: State, name: string, node: TSNode): PNode =
           # `tname` is name of nested struct / union / enum just
           # added, passed on as type name for field in `newIdentDefs()`
           (processed, tname) =
-            if not fdecl.isNil:
-              # Nested struct / union
-              (
-                gState.processNode(fdecl.tsNodeParent()),
-                gState.typeSection[^1].getIdentName()
-              )
-            elif not edecl.isNil:
-              # Nested enum
-              (
-                gState.processNode(edecl.tsNodeParent()),
-                $gState.enumSection[^1][0][1]
-              )
-            else:
-              (success, "")
+            block:
+              gState.typeScope.add name
+              let (p, t) = if not fdecl.isNil:
+                # Nested struct / union
+                (
+                  gState.processNode(fdecl.tsNodeParent()),
+                  gState.typeSection[^1].getIdentName()
+                )
+              elif not edecl.isNil:
+                # Nested enum
+                (
+                  gState.processNode(edecl.tsNodeParent()),
+                  $gState.enumSection[^1][0][1]
+                )
+              else:
+                (success, "")
+              discard gState.typeScope.pop
+              (p, t)
 
         if processed != success:
           return nil
-
+          
         if not fdecl.isNil and not isNamedField:
           # Since anonymous, add fields directly to this struct/union
 
@@ -923,6 +927,7 @@ proc addTypeObject(gState: State, node: TSNode, typeDef: PNode = nil, fname = ""
     #   )
     #  )
     # )
+    typeDef.prefixIdentName(gState.typeScope.join("_"))
     let
       name = typeDef.getIdentName()
       obj = newNode(nkObjectTy)
@@ -938,7 +943,7 @@ proc addTypeObject(gState: State, node: TSNode, typeDef: PNode = nil, fname = ""
       obj.add fields
     else:
       obj.add newNode(nkEmpty)
-
+    
     typeDef.add obj
 
     # If typeDef was passed in, need to add pragmas if any

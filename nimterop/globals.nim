@@ -51,6 +51,7 @@ type
       impShort*: string          # Short base name for pragma in output
       outputHandle*: File        # `--output | -o` open file handle
       sourceFile*: string        # Full path of header being currently processed
+      typeScope*: seq[string]    # Named scopes where new type is defined. If empty, we're at root.
 
       # Plugin callbacks
       onSymbol*, onSymbolOverride*: OnSymbol

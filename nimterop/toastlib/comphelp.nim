@@ -88,6 +88,17 @@ proc getIdentName*(node: PNode): string =
     if result.Bl and node.len > 0:
       result = node[0].getIdentName()
 
+proc prefixIdentName*(node: PNode, prefix: string = "") =
+  if prefix.len > 0 and node != nil:
+    var found = false
+    for i in 0 ..< node.len:
+      if node[i].kind == nkIdent and $node[i] != "*":
+        node[i].ident.s = prefix & "_" & node[i].ident.s
+        found = true
+        break
+    if not found and node.len > 0:
+      node[0].prefixIdentName(prefix)
+
 proc getNameInfo*(gState: State, node: TSNode, kind: NimSymKind, parent = ""):
   tuple[name, origname: string, info: TLineInfo] =
   # Shortcut to get identifier name and info (node value and line:col)
